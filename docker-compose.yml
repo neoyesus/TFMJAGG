@@ -1,51 +1,6 @@
 version: '3.9'
 
 services:
-  reverseproxy:
-    container_name: tfm-reverseproxy
-    build:
-      context: ./dockerfiles/lb
-      dockerfile: lb-alpine
-    ports:
-      - "${APP_PORT}:80"
-    volumes:
-      - ./dockerfiles/lb/config:/etc/nginx
-    depends_on:
-      - mongoclient
-    networks:
-      - tfm-network
-  mongodb:
-    image: mongo:latest
-    container_name: tfm-mongodb
-    command: mongod --port 27015
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: ${db_mongo_user}
-      MONGO_INITDB_ROOT_PASSWORD: ${db_mongo_pass}
-      MONGO_INITDB_DATABASE: ${db_mongo_database}
-    volumes:
-      - ./data/mongodb:/data/db
-    expose:
-      - 27015
-    networks:
-      - tfm-network
-  mongoclient:
-    image: mongo-express:latest
-    container_name: tfm-mongoclient
-    environment:
-      ME_CONFIG_OPTIONS_EDITORTHEME: "ambiance"
-      ME_CONFIG_MONGODB_SERVER: "tfm-mongodb"
-      ME_CONFIG_MONGODB_ENABLE_ADMIN: "true"
-      ME_CONFIG_MONGODB_AUTH_DATABASE: "admin"
-      ME_CONFIG_MONGODB_PORT: 27015
-      ME_CONFIG_SITE_BASEURL: "/mongoclient"
-      ME_CONFIG_MONGODB_ADMINUSERNAME: ${db_mongo_user}
-      ME_CONFIG_MONGODB_ADMINPASSWORD: ${db_mongo_pass}
-    depends_on:
-      - mongodb
-    expose:
-      - 8081
-    networks:
-    - tfm-network
   # scheduler & monitoring service
   airflow-webserver:
     hostname: myairflow
@@ -198,9 +153,51 @@ services:
           interval: 30s
           timeout: 20s
           retries: 3
-
-
-
+ 
+  #namenode:
+  #  image: bde2020/hadoop-namenode:2.0.0-hadoop2.7.4-java8
+  #  volumes:
+  #    - ./data/namenode:/hadoop/dfs/name
+  #  environment:
+  #    - CLUSTER_NAME=tfm
+  #  env_file:
+  #    - ./dockerfiles/hive/.hadoop-hive.env
+  #  ports:
+  #    - "50070:50070"
+  #datanode:
+  #  image: bde2020/hadoop-datanode:2.0.0-hadoop2.7.4-java8
+  #  volumes:
+  #    - ./data/datanode:/hadoop/dfs/data
+  #  env_file:
+  #    - ./dockerfiles/hive/.hadoop-hive.env
+  #  environment:
+  #    SERVICE_PRECONDITION: "namenode:50070"
+  #  ports:
+  #    - "50075:50075"
+  #hive-server:
+  #  image: bde2020/hive:2.3.2-postgresql-metastore
+  #  env_file:
+  #    - ./dockerfiles/hive/.hadoop-hive.env
+  #  environment:
+  #    HIVE_CORE_CONF_javax_jdo_option_ConnectionURL: "jdbc:postgresql://hive-metastore/metastore"
+  #    SERVICE_PRECONDITION: "hive-metastore:9083"
+  #  ports:
+  #    - "10000:10000"
+  #hive-metastore:
+  #  image: bde2020/hive:2.3.2-postgresql-metastore
+  #  env_file:
+  #    - ./dockerfiles/hive/.hadoop-hive.env
+  #  command: /opt/hive/bin/hive --service metastore
+  #  environment:
+  #    SERVICE_PRECONDITION: "namenode:50070 datanode:50075 hive-metastore-postgresql:5432"
+  #  ports:
+  #    - "9083:9083"
+  #hive-metastore-postgresql:
+  #  image: bde2020/hive-metastore-postgresql:2.3.0
+  #presto-coordinator:
+  #  image: shawnzhu/prestodb:0.181
+  #  ports:
+  #    - "8080:8080"
   
 networks:
   tfm-network:
