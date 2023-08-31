@@ -1,11 +1,29 @@
 version: '3.9'
 
 services:
+    #procesar informacio
+    jupyter:
+        image: jupyter/base-notebook:latest
+        volumes:
+            - ./data/postgres:/data/postgres
+            - ./datosacargar:/datosacargar
+        ports:
+            - "8888:8888"
+        environment:
+            PGHOST: postgres
+            PGUSER: postgres
+            PGPASSWORD: postgres
+            PGDATABASE: postgres
+        networks:
+            - tfm-network
+        
+    
+
     # scheduler & monitoring service
     airflow-webserver:
         hostname: myairflow
         container_name: airflow_container
-        image: 'puckel/docker-airflow:1.10.9'  # latest image as of 2021-11-08.
+        image: 'puckel/docker-airflow:latest'  # latest image as of 2021-11-08.
         ports:
             - '8085:8080'
         networks:
@@ -14,6 +32,7 @@ services:
             - ./data/airflow:/usr/local/airflow/data
             - ./logs/airflow:/usr/local/airflow/logs
             - ./dockerfiles/airflow/dags:/usr/local/airflow/dags
+            - ./datosacargar:/datosacargar
             - ./dockerfiles/airflow/requirements/requirements.txt:/requirements.txt
         restart: on-failure
         healthcheck:
@@ -98,6 +117,8 @@ services:
             MAPBOX_API_KEY: ${MAPBOX_API_KEY}
         ports:
             - "8088:8088"
+        networks:
+            - tfm-network
 
     # relational database
     postgres:
@@ -110,6 +131,7 @@ services:
             PGDATA: /data/postgres
         volumes:
             - ./data/postgres:/data/postgres
+            - ./datosacargar:/datosacargar
         ports:
             - "5432:5432"
         networks:
